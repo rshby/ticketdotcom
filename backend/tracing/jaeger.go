@@ -4,11 +4,12 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/uber/jaeger-client-go"
 	"github.com/uber/jaeger-client-go/config"
-	"log"
+	"io"
 )
 
-func ConnectJaegerTracing() {
+func ConnectJaegerTracing() (opentracing.Tracer, io.Closer, error) {
 	cfg := config.Configuration{
+		ServiceName: "tiket-service",
 		Sampler: &config.SamplerConfig{
 			Type:  jaeger.SamplerTypeConst,
 			Param: 100,
@@ -19,11 +20,6 @@ func ConnectJaegerTracing() {
 		},
 	}
 
-	tracer, _, err := cfg.NewTracer()
-
-	if err != nil {
-		log.Println("error cant initialize jarger tracer :", err.Error())
-	}
-
-	opentracing.SetGlobalTracer(tracer)
+	tracer, closer, err := cfg.NewTracer(config.Logger(jaeger.StdLogger))
+	return tracer, closer, err
 }

@@ -24,13 +24,18 @@ func main() {
 	fmt.Println("test")
 
 	// register tracing
-	tracing.ConnectJaegerTracing()
+	tracer, _, err := tracing.ConnectJaegerTracing()
+	//defer closer.Close()
+	opentracing.SetGlobalTracer(tracer)
+	if err != nil {
+		panic("err cant connect jaeger : " + err.Error())
+	}
 
 	r := gin.Default()
 	v1 := r.Group("/api/v1")
 	v1.GET("/test", func(c *gin.Context) {
-		trace, _ := opentracing.StartSpanFromContext(c, "handler test")
-		defer trace.Finish()
+		span, _ := opentracing.StartSpanFromContext(c, "handler test")
+		defer span.Finish()
 
 		c.JSON(http.StatusOK, &dto.ApiResponse{
 			StatusCode: http.StatusOK,
