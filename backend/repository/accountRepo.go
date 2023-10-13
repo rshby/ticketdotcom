@@ -19,7 +19,11 @@ func NewAccountRepo(db *sql.DB) repository.IAccountRepo {
 	return &AccountRepo{db}
 }
 
-// method get all data accounts
+func (a *AccountRepo) Insert(ctx context.Context, input *entity.Account) (*entity.Account, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (a *AccountRepo) GetAll(ctx context.Context) ([]entity.Account, error) {
 	// cretate new context tracing
 	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "repository GetAll accounts")
@@ -61,10 +65,4 @@ func (a *AccountRepo) GetAll(ctx context.Context) ([]entity.Account, error) {
 		log.Int("total-data", len(accounts)),
 	)
 	return accounts, nil
-}
-
-// method insert data account
-func (a *AccountRepo) Insert(ctx context.Context, input *entity.Account) (*entity.Account, error) {
-	//TODO implement me
-	panic("implement me")
 }

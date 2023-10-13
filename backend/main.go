@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/opentracing/opentracing-go"
+	"log"
 	"net/http"
 	"os"
 )
@@ -15,7 +16,7 @@ import (
 func init() {
 	err := godotenv.Load(".env")
 	if err != nil {
-		panic(err)
+		log.Fatalf("cant load env file : ", err.Error())
 	}
 }
 
@@ -29,7 +30,7 @@ func main() {
 	tracer, _, err := tracing.ConnectJaegerTracing()
 	opentracing.SetGlobalTracer(tracer)
 	if err != nil {
-		panic("err cant connect jaeger : " + err.Error())
+		log.Fatalf("err cant connect jaeger : " + err.Error())
 	}
 
 	r := gin.Default()
@@ -48,11 +49,6 @@ func main() {
 	v1.GET("/test", func(c *gin.Context) {
 		span, _ := opentracing.StartSpanFromContext(c, "handler test")
 		defer span.Finish()
-
-		// call function from service
-		// serviec.GetAllData(ctx)
-
-		//
 
 		c.JSON(http.StatusOK, &dto.ApiResponse{
 			StatusCode: http.StatusOK,
