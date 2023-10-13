@@ -1,6 +1,7 @@
 package main
 
 import (
+	"backend/database"
 	"backend/model/dto"
 	"backend/tracing"
 	"fmt"
@@ -16,11 +17,13 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(os.Getenv("DATABASE_NAME"))
 }
 
 func main() {
-	fmt.Println("test")
+	fmt.Println("app run")
+
+	db := database.ConnectDB()
+	fmt.Println(db)
 
 	// register tracing
 	tracer, _, err := tracing.ConnectJaegerTracing()

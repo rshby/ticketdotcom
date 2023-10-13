@@ -7,4 +7,5 @@ import (
 
 type IAccountRepo interface {
 	Insert(ctx context.Context, input *entity.Account) (*entity.Account, error)
+	GetAll(ctx context.Context) ([]entity.Account, error)
 }
