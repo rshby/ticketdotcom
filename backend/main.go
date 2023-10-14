@@ -40,12 +40,16 @@ func main() {
 
 	// register repository
 	genderRepo := repository.NewGenderRepo(db)
+	provinceRepo := repository.NewProvinceRepo(db)
+	cityRepo := repository.NewCityRepo(db)
 
 	// register service
 	genderService := service.NewGenderService(genderRepo)
+	provinceService := service.NewProvinceService(provinceRepo, cityRepo)
 
 	// register handler
 	genderHandler := handler.NewGenderHandler(genderService)
+	provinceHandler := handler.NewProvinceHandler(provinceService)
 
 	r := gin.Default()
 	r.NoRoute(gin.HandlerFunc(func(c *gin.Context) {
@@ -75,6 +79,9 @@ func main() {
 
 	// gender routes
 	router.CreateGenderRoutes(v1, genderHandler)
+
+	// province routes
+	router.CreateProvinceRoutes(v1, provinceHandler)
 
 	r.Run(":" + os.Getenv("APP_PORT"))
 }
