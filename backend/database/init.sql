@@ -1,3 +1,7 @@
+CREATE DATABASE ticketdotcom;
+
+USE ticketdotcom;
+
 CREATE TABLE `account` (
     `email` varchar(255) UNIQUE PRIMARY KEY NOT NULL,
     `username` varchar(255) NOT NULL,
