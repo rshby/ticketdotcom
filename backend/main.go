@@ -2,7 +2,12 @@ package main
 
 import (
 	"backend/database"
+	"backend/handler"
+	"backend/helper"
 	"backend/model/dto"
+	"backend/repository"
+	"backend/router"
+	"backend/service"
 	"backend/tracing"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -33,14 +38,24 @@ func main() {
 		log.Fatalf("err cant connect jaeger : " + err.Error())
 	}
 
+	// register repository
+	genderRepo := repository.NewGenderRepo(db)
+
+	// register service
+	genderService := service.NewGenderService(genderRepo)
+
+	// register handler
+	genderHandler := handler.NewGenderHandler(genderService)
+
 	r := gin.Default()
 	r.NoRoute(gin.HandlerFunc(func(c *gin.Context) {
 		span, _ := opentracing.StartSpanFromContextWithTracer(c, tracer, "handler no route")
 		defer span.Finish()
 
-		c.JSON(http.StatusNotFound, &dto.ApiResponse{
-			StatusCode: http.StatusNotFound,
-			Status:     "not found",
+		statusCode := http.StatusNotFound
+		c.JSON(statusCode, &dto.ApiResponse{
+			StatusCode: statusCode,
+			Status:     helper.GenerateStatusFromCode(statusCode),
 			Message:    "endpoint not found",
 		})
 	}))
@@ -57,6 +72,9 @@ func main() {
 		})
 		return
 	})
+
+	// gender routes
+	router.CreateGenderRoutes(v1, genderHandler)
 
 	r.Run(":" + os.Getenv("APP_PORT"))
 }
