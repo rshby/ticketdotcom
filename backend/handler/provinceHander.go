@@ -10,6 +10,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -44,13 +45,6 @@ func (p *ProvinceHandler) Insert(c *gin.Context) {
 			})
 			return
 		}
-
-		c.JSON(statusCode, &dto.ApiResponse{
-			StatusCode: statusCode,
-			Status:     helper.GenerateStatusFromCode(statusCode),
-			Message:    err.Error(),
-		})
-		return
 	}
 
 	// call procedure insert in repository
@@ -79,4 +73,58 @@ func (p *ProvinceHandler) Insert(c *gin.Context) {
 		Data:       res,
 	})
 	return
+}
+
+// handler get province by id
+func (p *ProvinceHandler) GetById(c *gin.Context) {
+	span, ctxTracing := opentracing.StartSpanFromContext(c, "ProvinceHandler GetById")
+	defer span.Finish()
+
+	// get id
+	id, err := strconv.Atoi(c.Params.ByName("id"))
+	if err != nil {
+		statusCode := http.StatusBadRequest
+		c.JSON(statusCode, &dto.ApiResponse{
+			StatusCode: statusCode,
+			Status:     helper.GenerateStatusFromCode(http.StatusBadRequest),
+			Message:    "cant convert id to int",
+		})
+		return
+	}
+
+	span.SetTag("request-id", id)
+
+	// call method GetById in service
+	result, err := p.ProvinceService.GetById(ctxTracing, id)
+	if err != nil {
+		// jika not found
+		if strings.Contains(err.Error(), "not found") || strings.Contains(err.Error(), "no rows") {
+			statusCode := http.StatusNotFound
+			c.JSON(statusCode, &dto.ApiResponse{
+				StatusCode: statusCode,
+				Status:     helper.GenerateStatusFromCode(statusCode),
+				Message:    "record province not found",
+			})
+			return
+		}
+
+		// jika internal server error
+		statusCode := http.StatusInternalServerError
+		c.JSON(statusCode, &dto.ApiResponse{
+			StatusCode: statusCode,
+			Status:     helper.GenerateStatusFromCode(statusCode),
+			Message:    err.Error(),
+		})
+		return
+	}
+
+	// success get data province by id
+	span.SetTag("response-object", *result)
+	statusCode := http.StatusOK
+	c.JSON(statusCode, &dto.ApiResponse{
+		StatusCode: statusCode,
+		Status:     helper.GenerateStatusFromCode(statusCode),
+		Message:    "success get data province by id",
+		Data:       result,
+	})
 }

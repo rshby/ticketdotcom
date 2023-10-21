@@ -35,7 +35,11 @@ func (p *ProvinceRepoMock) GetAll(ctx context.Context) ([]entity.Province, error
 
 func (p *ProvinceRepoMock) GetById(ctx context.Context, wg *sync.WaitGroup, id int, chanRes chan entity.Province, chanError chan error) {
 	wg.Add(1)
-	defer wg.Done()
+	defer func() {
+		close(chanError)
+		close(chanRes)
+		wg.Done()
+	}()
 
 	args := p.Mock.Called(ctx, wg, id, chanRes, chanError)
 	chanRes <- args.Get(0).(entity.Province)

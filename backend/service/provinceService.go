@@ -69,12 +69,6 @@ func (p *ProvinceService) GetById(ctx context.Context, id int) (*dto.ProvinceDet
 	chanErr := make(chan error, 1)
 	chanResCities := make(chan []entity.City, 1)
 	chanErrCity := make(chan error, 1)
-	defer func() {
-		close(chanRes)
-		close(chanErr)
-		close(chanResCities)
-		close(chanErrCity)
-	}()
 
 	wg := &sync.WaitGroup{}
 	go p.ProvinceRepo.GetById(ctxTracing, wg, id, chanRes, chanErr)               // get province

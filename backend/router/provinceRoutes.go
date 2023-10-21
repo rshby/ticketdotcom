@@ -9,6 +9,7 @@ func CreateProvinceRoutes(r *gin.RouterGroup, handler *handler.ProvinceHandler) 
 	router := r.Group("")
 
 	router.POST("/province", handler.Insert)
+	router.GET("/province/:id", handler.GetById)
 
 	return router
 }

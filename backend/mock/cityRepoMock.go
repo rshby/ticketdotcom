@@ -49,7 +49,11 @@ func (c *CityRepoMock) GetById(ctx context.Context, wg *sync.WaitGroup, id int, 
 
 func (c *CityRepoMock) GetByProvinceId(ctx context.Context, wg *sync.WaitGroup, provinceId int, chanRes chan []entity.City, chanError chan error) {
 	wg.Add(1)
-	defer wg.Done()
+	defer func() {
+		close(chanError)
+		close(chanRes)
+		wg.Done()
+	}()
 
 	args := c.Mock.Called(ctx, wg, provinceId, chanRes, chanError)
 	if cities := args.Get(0); cities == nil {

@@ -42,31 +42,12 @@ func (g *GenderHandler) Insert(c *gin.Context) {
 			})
 			return
 		}
-
-		c.JSON(statusCode, &dto.ApiResponse{
-			StatusCode: statusCode,
-			Status:     helper.GenerateStatusFromCode(statusCode),
-			Message:    err.Error(),
-		})
-		return
 	}
 
 	span.SetTag("request", request)
 
 	res, err := g.GenderService.Insert(ctxTracing, &request)
 	if err != nil {
-		// if not found
-		if strings.Contains(err.Error(), "not found") {
-			statusCode := http.StatusNotFound
-			c.JSON(statusCode, &dto.ApiResponse{
-				StatusCode: statusCode,
-				Status:     helper.GenerateStatusFromCode(statusCode),
-				Message:    err.Error(),
-			})
-			return
-		}
-
-		// if internal server error
 		statusCode := http.StatusInternalServerError
 		c.JSON(statusCode, &dto.ApiResponse{
 			StatusCode: statusCode,

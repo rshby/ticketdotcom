@@ -1,4 +1,4 @@
-package testing
+package service_test
 
 import (
 	mck "backend/mock"
