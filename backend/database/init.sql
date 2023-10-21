@@ -70,3 +70,8 @@ ALTER TABLE `district` ADD FOREIGN KEY (`city_id`) REFERENCES `city` (`id`);
 ALTER TABLE `sub_district` ADD FOREIGN KEY (`district_id`) REFERENCES `district` (`id`);
 
 ALTER TABLE `address` ADD FOREIGN KEY (`sub_district`) REFERENCES `sub_district` (`id`);
+
+
+-- insert data gender
+INSERT INTO gender(code, name) VALUES ('M', 'Male'),
+                                      ('F', 'Female');

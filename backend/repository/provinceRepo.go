@@ -21,6 +21,7 @@ func NewProvinceRepo(db *sql.DB) repository.IProvinceRepo {
 }
 
 func (p *ProvinceRepo) GetById(ctx context.Context, wg *sync.WaitGroup, id int, chanRes chan entity.Province, chanError chan error) {
+	wg.Add(1)
 	defer wg.Done()
 
 	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "ProvinceRepo GetById")

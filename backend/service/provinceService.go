@@ -6,8 +6,10 @@ import (
 	repository "backend/repository/interface"
 	service "backend/service/interface"
 	"context"
+	"errors"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/log"
+	"sync"
 )
 
 type ProvinceService struct {
@@ -46,11 +48,52 @@ func (p *ProvinceService) Insert(ctx context.Context, request *dto.InsertProvinc
 }
 
 func (p *ProvinceService) GetAll(ctx context.Context) ([]entity.Province, error) {
-	//TODO implement me
-	panic("implement me")
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "ProvinceService GetAll")
+	defer span.Finish()
+
+	// call procedure get all in provinceService
+	provinces, err := p.ProvinceRepo.GetAll(ctxTracing)
+	if err != nil {
+		return nil, errors.New("record not found")
+	}
+
+	return provinces, nil
 }
 
 func (p *ProvinceService) GetById(ctx context.Context, id int) (*dto.ProvinceDetail, error) {
-	//TODO implement me
-	panic("implement me")
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "ProvinceService GetById")
+	defer span.Finish()
+
+	// call procedure
+	chanRes := make(chan entity.Province, 1)
+	chanErr := make(chan error, 1)
+	chanResCities := make(chan []entity.City, 1)
+	chanErrCity := make(chan error, 1)
+	defer func() {
+		close(chanRes)
+		close(chanErr)
+		close(chanResCities)
+		close(chanErrCity)
+	}()
+
+	wg := &sync.WaitGroup{}
+	go p.ProvinceRepo.GetById(ctxTracing, wg, id, chanRes, chanErr)               // get province
+	go p.CityRepo.GetByProvinceId(ctxTracing, wg, id, chanResCities, chanErrCity) // get cities by province_id
+	wg.Wait()
+
+	// receive from channel
+	province, err := <-chanRes, <-chanErr
+	if err != nil {
+		return nil, err
+	}
+
+	cities, _ := <-chanResCities, <-chanErrCity
+
+	// success
+	response := dto.ProvinceDetail{
+		Id:     province.Id,
+		Name:   province.Name,
+		Cities: cities,
+	}
+	return &response, nil
 }

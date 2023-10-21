@@ -35,6 +35,7 @@ func (c *CityRepo) GetById(ctx context.Context, wg *sync.WaitGroup, id int, chan
 }
 
 func (c *CityRepo) GetByProvinceId(ctx context.Context, wg *sync.WaitGroup, provinceId int, chanRes chan []entity.City, chanError chan error) {
+	wg.Add(1)
 	defer wg.Done()
 
 	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CityRepo GetByProvinceId")

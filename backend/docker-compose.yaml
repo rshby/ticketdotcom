@@ -26,13 +26,16 @@ services:
   jaeger:
     image: jaegertracing/all-in-one:latest
     container_name: jaeger
-    restart: always
     networks:
       - tiket-network
     ports:
       - target: 16686
         published: 16686
         protocol: tcp
+        mode: host
+      - target: 6831
+        published: 6831
+        protocol: udp
         mode: host
 
   # my service

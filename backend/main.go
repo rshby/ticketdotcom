@@ -32,7 +32,8 @@ func main() {
 	fmt.Println(db)
 
 	// register tracing
-	tracer, _, err := tracing.ConnectJaegerTracing()
+	tracer, closer, err := tracing.ConnectJaegerTracing()
+	defer closer.Close()
 	opentracing.SetGlobalTracer(tracer)
 	if err != nil {
 		log.Fatalf("err cant connect jaeger : " + err.Error())

@@ -14,6 +14,13 @@ type GenderService struct {
 	GenderRepo repository.IGenderRepo
 }
 
+// function provider
+func NewGenderService(genderRepo repository.IGenderRepo) service.IGenderService {
+	return &GenderService{
+		GenderRepo: genderRepo,
+	}
+}
+
 func (g *GenderService) Insert(ctx context.Context, request *dto.GenderRequest) (*entity.Gender, error) {
 	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "GenderService Insert")
 	defer span.Finish()
@@ -48,11 +55,4 @@ func (g *GenderService) GetAll(ctx context.Context) ([]entity.Gender, error) {
 
 	// success
 	return res, nil
-}
-
-// function provider
-func NewGenderService(genderRepo repository.IGenderRepo) service.IGenderService {
-	return &GenderService{
-		GenderRepo: genderRepo,
-	}
 }
