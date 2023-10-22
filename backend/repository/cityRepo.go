@@ -62,8 +62,48 @@ func (c *CityRepo) GetAll(ctx context.Context) ([]entity.City, error) {
 }
 
 func (c *CityRepo) GetById(ctx context.Context, wg *sync.WaitGroup, id int, chanRes chan entity.City, chanError chan error) {
-	//TODO implement me
-	panic("implement me")
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CityRepo GetById")
+	defer span.Finish()
+
+	span.SetTag("request-id", id)
+
+	wg.Add(1)
+	defer func() {
+		close(chanRes)
+		close(chanError)
+		wg.Done()
+	}()
+
+	// create statement query
+	statement, err := c.DB.PrepareContext(ctxTracing, "SELECT id, name, province_id FROM city WHERE id=?")
+	defer statement.Close()
+	if err != nil {
+		chanRes <- entity.City{}
+		chanError <- err
+		return
+	}
+
+	// execute query
+	row := statement.QueryRowContext(ctxTracing, id)
+	if row.Err() != nil {
+		chanRes <- entity.City{}
+		chanError <- row.Err()
+		return
+	}
+
+	var city entity.City
+	if err := row.Scan(&city.Id, &city.Name, &city.ProvinceId); err != nil {
+		chanRes <- entity.City{}
+		chanError <- err
+		return
+	}
+
+	// success
+	chanRes <- city
+	chanError <- nil
+
+	span.SetTag("response-object", city)
+	return
 }
 
 func (c *CityRepo) GetByProvinceId(ctx context.Context, wg *sync.WaitGroup, provinceId int, chanRes chan []entity.City, chanError chan error) {

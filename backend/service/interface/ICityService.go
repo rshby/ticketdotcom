@@ -8,6 +8,6 @@ import (
 
 type ICityService interface {
 	GetAll(ctx context.Context) ([]entity.City, error)
-	GetById(ctx context.Context) (*dto.CityDetail[*entity.City], error)
+	GetById(ctx context.Context, id int) (*dto.CityDetail[*entity.City], error)
 	GetByProvinceId(ctx context.Context, provinceId int) (*dto.CityDetail[[]entity.City], error)
 }

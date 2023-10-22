@@ -1,0 +1,17 @@
+http://localhost:7010/api/v1/city/1
+
+response :
+{
+    "data" : {
+        "province" : {
+            "id" : 1,
+            "name" : "DKI Jakarta"
+        },
+        "city" : {
+            "id" : 2,
+            "name" : "Jakarta Selatan"
+        }
+    }
+}
+
+// get data city -> dapet provinceId -> get data provice by id(province_id)
