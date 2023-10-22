@@ -35,7 +35,7 @@ func (c *CityRepoMock) GetAll(ctx context.Context) ([]entity.City, error) {
 		return nil, args.Error(1)
 	}
 
-	return nil, args.Error(1)
+	return cities.([]entity.City), args.Error(1)
 }
 
 func (c *CityRepoMock) GetById(ctx context.Context, wg *sync.WaitGroup, id int, chanRes chan entity.City, chanError chan error) {

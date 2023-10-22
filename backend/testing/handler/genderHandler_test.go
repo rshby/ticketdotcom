@@ -134,3 +134,100 @@ func TestGenderHandler_Insert(t *testing.T) {
 		genderService.Mock.AssertExpectations(t)
 	})
 }
+
+func TestGenderHandler_GetAll(t *testing.T) {
+	t.Run("get all gender success", func(t *testing.T) {
+		genderService := mck.NewGenderServiceMock()
+		genderHandler := handler.NewGenderHandler(genderService)
+
+		// mock genderService method GetAll
+		genderService.Mock.On("GetAll", mock.Anything).Return([]entity.Gender{
+			{1, "F", "Female"},
+			{2, "M", "Male"},
+		}, nil)
+
+		// create routes
+		r := gin.Default()
+		r.GET("/", genderHandler.GetAll)
+
+		// create request
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		recorder := httptest.NewRecorder()
+
+		// execute handler
+		r.ServeHTTP(recorder, req)
+
+		// result
+		result := recorder.Result()
+		body, _ := io.ReadAll(result.Body)
+		responseBody := map[string]any{}
+		json.Unmarshal(body, &responseBody)
+
+		// validate test
+		assert.Equal(t, http.StatusOK, result.StatusCode)
+		assert.Equal(t, http.StatusOK, int(responseBody["status_code"].(float64)))
+		assert.Equal(t, "ok", responseBody["status"].(string))
+	})
+	t.Run("get all gender error not found", func(t *testing.T) {
+		genderService := mck.NewGenderServiceMock()
+		genderHandler := handler.NewGenderHandler(genderService)
+
+		// mock genderService method GetAll
+		errorMessage := "record not found"
+		genderService.Mock.On("GetAll", mock.Anything).Return(nil, errors.New(errorMessage)).Times(1)
+
+		// create routes
+		r := gin.Default()
+		r.GET("/", genderHandler.GetAll)
+
+		// create request
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		recorder := httptest.NewRecorder()
+
+		// execute handler
+		r.ServeHTTP(recorder, req)
+
+		// result
+		response := recorder.Result()
+		body, _ := io.ReadAll(response.Body)
+		responseBody := map[string]any{}
+		json.Unmarshal(body, &responseBody)
+
+		// validate testing
+		assert.Equal(t, http.StatusNotFound, response.StatusCode)
+		assert.Equal(t, http.StatusNotFound, int(responseBody["status_code"].(float64)))
+		assert.Equal(t, errorMessage, responseBody["message"].(string))
+		genderService.Mock.AssertExpectations(t)
+	})
+	t.Run("get all gender error internal server error", func(t *testing.T) {
+		genderService := mck.NewGenderServiceMock()
+		genderHandler := handler.NewGenderHandler(genderService)
+
+		// mock genderService method GetAll
+		errorMessage := "database error"
+		genderService.Mock.On("GetAll", mock.Anything).Return(nil, errors.New(errorMessage)).Times(1)
+
+		// create routes
+		r := gin.Default()
+		r.GET("/", genderHandler.GetAll)
+
+		// create request
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		recorder := httptest.NewRecorder()
+
+		// execute handler
+		r.ServeHTTP(recorder, req)
+
+		// result
+		response := recorder.Result()
+		body, _ := io.ReadAll(response.Body)
+		responseBody := map[string]any{}
+		json.Unmarshal(body, &responseBody)
+
+		// validate testing
+		assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
+		assert.Equal(t, http.StatusInternalServerError, int(responseBody["status_code"].(float64)))
+		assert.Equal(t, errorMessage, responseBody["message"].(string))
+		genderService.Mock.AssertExpectations(t)
+	})
+}

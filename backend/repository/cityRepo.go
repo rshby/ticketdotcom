@@ -25,8 +25,40 @@ func (c *CityRepo) Insert(ctx context.Context, input *entity.City) (*entity.City
 }
 
 func (c *CityRepo) GetAll(ctx context.Context) ([]entity.City, error) {
-	//TODO implement me
-	panic("implement me")
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CityRepo GetAll")
+	defer span.Finish()
+
+	// create prepare statement
+	statement, err := c.DB.PrepareContext(ctxTracing, "SELECT id, name, province_id FROM city")
+	defer statement.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	// execute query
+	rows, err := statement.QueryContext(ctxTracing)
+	defer rows.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	var cities []entity.City
+	for rows.Next() {
+		var city entity.City
+		if err := rows.Scan(&city.Id, &city.Name, &city.ProvinceId); err != nil {
+			return nil, err
+		}
+
+		cities = append(cities, city)
+	}
+
+	// if not found
+	if len(cities) == 0 {
+		return nil, errors.New("record not found")
+	}
+
+	// success
+	return cities, nil
 }
 
 func (c *CityRepo) GetById(ctx context.Context, wg *sync.WaitGroup, id int, chanRes chan entity.City, chanError chan error) {
