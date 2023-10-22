@@ -17,6 +17,17 @@ func NewCityServiceMock() *CityServiceMock {
 	}
 }
 
+func (c *CityServiceMock) Insert(ctx context.Context, request *dto.InsertCityRequest) (*entity.City, error) {
+	args := c.Mock.Called(ctx, request)
+
+	city := args.Get(0)
+	if city == nil {
+		return nil, args.Error(1)
+	}
+
+	return city.(*entity.City), args.Error(1)
+}
+
 func (c *CityServiceMock) GetAll(ctx context.Context) ([]entity.City, error) {
 	args := c.Mock.Called(ctx)
 
@@ -29,11 +40,25 @@ func (c *CityServiceMock) GetAll(ctx context.Context) ([]entity.City, error) {
 }
 
 func (c *CityServiceMock) GetById(ctx context.Context, id int) (*dto.CityDetail[*entity.City], error) {
-	//TODO implement me
-	panic("implement me")
+	args := c.Mock.Called(ctx, id)
+
+	city := args.Get(0)
+	err := args.Error(1)
+	if city == nil {
+		return nil, err
+	}
+
+	return city.(*dto.CityDetail[*entity.City]), err
 }
 
 func (c *CityServiceMock) GetByProvinceId(ctx context.Context, provinceId int) (*dto.CityDetail[[]entity.City], error) {
-	//TODO implement me
-	panic("implement me")
+	args := c.Mock.Called(ctx, provinceId)
+
+	city := args.Get(0)
+	err := args.Error(1)
+	if city == nil {
+		return nil, err
+	}
+
+	return city.(*dto.CityDetail[[]entity.City]), err
 }

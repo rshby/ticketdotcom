@@ -20,8 +20,30 @@ func NewCityRepo(db *sql.DB) repository.ICityRepo {
 }
 
 func (c *CityRepo) Insert(ctx context.Context, input *entity.City) (*entity.City, error) {
-	//TODO implement me
-	panic("implement me")
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CityRepo Insert")
+	defer span.Finish()
+
+	// create statement query
+	statement, err := c.DB.PrepareContext(ctxTracing, "INSERT INTO city(name, province_id) VALUES (?, ?)")
+	defer statement.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	// execute query
+	result, err := statement.ExecContext(ctxTracing, input.Name, input.ProvinceId)
+	if err != nil {
+		return nil, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+
+	input.Id = int(id)
+	span.SetTag("response-object", *input)
+	return input, nil
 }
 
 func (c *CityRepo) GetAll(ctx context.Context) ([]entity.City, error) {

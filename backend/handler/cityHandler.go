@@ -4,9 +4,12 @@ import (
 	"backend/helper"
 	"backend/model/dto"
 	service "backend/service/interface"
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/go-playground/validator/v10"
 	"github.com/opentracing/opentracing-go"
 	"net/http"
+	"strings"
 )
 
 type CityHandler struct {
@@ -20,7 +23,7 @@ func NewCityHandler(cityService service.ICityService) *CityHandler {
 	}
 }
 
-// method get all city
+// handler get all city
 func (c *CityHandler) GetAllCity(ctx *gin.Context) {
 	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CityHandler GetAllCity")
 	defer span.Finish()
@@ -45,5 +48,66 @@ func (c *CityHandler) GetAllCity(ctx *gin.Context) {
 		Message:    "success get all data cities",
 		Data:       cities,
 	})
+	return
+}
+
+// handler insert city
+func (c *CityHandler) Insert(ctx *gin.Context) {
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CityHandler Insert")
+	defer span.Finish()
+
+	var request dto.InsertCityRequest
+	if err := ctx.ShouldBindJSON(&request); err != nil {
+		if errMsg, ok := err.(validator.ValidationErrors); ok {
+			var errorMessages []string
+			for _, item := range errMsg {
+				errorMessages = append(errorMessages, fmt.Sprintf("error field %v, with tag %v", item.Field(), item.Tag()))
+			}
+
+			statusCode := http.StatusBadRequest
+			ctx.JSON(statusCode, &dto.ApiResponse{
+				StatusCode: statusCode,
+				Status:     helper.GenerateStatusFromCode(statusCode),
+				Message:    strings.Join(errorMessages, ". "),
+			})
+			return
+		}
+	}
+
+	// call procedure insert in service
+	result, err := c.CityService.Insert(ctxTracing, &request)
+	if err != nil {
+		// if error not found
+		if strings.Contains(err.Error(), "not found") {
+			statusCode := http.StatusNotFound
+			ctx.JSON(statusCode, &dto.ApiResponse{
+				StatusCode: statusCode,
+				Status:     helper.GenerateStatusFromCode(statusCode),
+				Message:    err.Error(),
+			})
+			return
+		}
+
+		// if error internal server
+		statusCode := http.StatusInternalServerError
+		ctx.JSON(statusCode, &dto.ApiResponse{
+			StatusCode: statusCode,
+			Status:     helper.GenerateStatusFromCode(statusCode),
+			Message:    err.Error(),
+		})
+		return
+	}
+
+	// success insert
+	statusCode := http.StatusOK
+	response := dto.ApiResponse{
+		StatusCode: statusCode,
+		Status:     helper.GenerateStatusFromCode(statusCode),
+		Message:    "success insert city to database",
+		Data:       result,
+	}
+
+	span.SetTag("response-object", response)
+	ctx.JSON(statusCode, &response)
 	return
 }

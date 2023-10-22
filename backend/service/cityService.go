@@ -6,6 +6,7 @@ import (
 	repository "backend/repository/interface"
 	service "backend/service/interface"
 	"context"
+	"errors"
 	"github.com/opentracing/opentracing-go"
 	"sync"
 )
@@ -21,6 +22,37 @@ func NewCityService(provinceRepo repository.IProvinceRepo, cityRepo repository.I
 		ProvinceRepository: provinceRepo,
 		CityRepository:     cityRepo,
 	}
+}
+
+func (c *CityService) Insert(ctx context.Context, request *dto.InsertCityRequest) (*entity.City, error) {
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CityService Insert")
+	defer span.Finish()
+
+	// cek province apakah ada di database
+	wg := &sync.WaitGroup{}
+	chanProvince := make(chan entity.Province, 1)
+	chanErr := make(chan error, 1)
+	go c.ProvinceRepository.GetById(ctxTracing, wg, request.ProvinceId, chanProvince, chanErr)
+	wg.Wait()
+	_, err := <-chanProvince, <-chanErr
+	if err != nil {
+		return nil, errors.New("record province not found")
+	}
+
+	// create entity
+	entity := entity.City{
+		Name:       request.Name,
+		ProvinceId: request.ProvinceId,
+	}
+
+	// call procedure insert in cityRepo
+	result, err := c.CityRepository.Insert(ctxTracing, &entity)
+	if err != nil {
+		return nil, err
+	}
+
+	// success insert
+	return result, nil
 }
 
 func (c *CityService) GetAll(ctx context.Context) ([]entity.City, error) {

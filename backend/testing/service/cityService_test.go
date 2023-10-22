@@ -162,3 +162,94 @@ func TestCityService_GetById(t *testing.T) {
 		provinceRepo.Mock.AssertExpectations(t)
 	})
 }
+
+func TestCityService_Insert(t *testing.T) {
+	t.Run("test insert city success", func(t *testing.T) {
+		provinceRepo := mck.NewProvinceRepoMock()
+		cityRepo := mck.NewCityRepoMock()
+		cityService := service.NewCityService(provinceRepo, cityRepo)
+
+		// mock provinceRepo method GetById
+		provinceRepo.Mock.On("GetById", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(entity.Province{
+				Id:   1,
+				Name: "DKI Jakarta",
+			}, nil).Times(1)
+
+		// mock cityRepo method Insert
+		cityName := "Jakarta Selatan"
+		cityRepo.Mock.On("Insert", mock.Anything, mock.Anything).Return(&entity.City{
+			Id:         1,
+			Name:       cityName,
+			ProvinceId: 1,
+		}, nil).Times(1)
+
+		// execute service method
+		result, err := cityService.Insert(context.Background(), &dto.InsertCityRequest{
+			Name:       "Jakarta Selatan",
+			ProvinceId: 1,
+		})
+
+		// validate testing
+		assert.Nil(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, 1, result.Id)
+		assert.Equal(t, 1, result.ProvinceId)
+		assert.Equal(t, cityName, result.Name)
+		cityRepo.Mock.AssertExpectations(t)
+		provinceRepo.Mock.AssertExpectations(t)
+	})
+	t.Run("test insert city error province not found", func(t *testing.T) {
+		provinceRepo := mck.NewProvinceRepoMock()
+		cityRepo := mck.NewCityRepoMock()
+		cityService := service.NewCityService(provinceRepo, cityRepo)
+
+		// mock provinceRepo method GetById
+		errorMessage := "record not found"
+		provinceRepo.Mock.On("GetById", mock.Anything, mock.Anything, 1, mock.Anything, mock.Anything).
+			Return(entity.Province{}, errors.New(errorMessage)).Times(1)
+
+		// execute service method
+		result, err := cityService.Insert(context.Background(), &dto.InsertCityRequest{
+			Name:       "Jakarta Selatan",
+			ProvinceId: 1,
+		})
+
+		// validate testing
+		assert.Nil(t, result)
+		assert.NotNil(t, err)
+		assert.Error(t, err)
+		assert.Equal(t, "record province not found", err.Error())
+		provinceRepo.Mock.AssertExpectations(t)
+	})
+	t.Run("test insert city error failed to insert", func(t *testing.T) {
+		provinceRepo := mck.NewProvinceRepoMock()
+		cityRepo := mck.NewCityRepoMock()
+		cityService := service.NewCityService(provinceRepo, cityRepo)
+
+		// mock provinceRepo method GetById
+		provinceRepo.Mock.On("GetById", mock.Anything, mock.Anything, 1, mock.Anything, mock.Anything).
+			Return(entity.Province{
+				Id:   1,
+				Name: "DKI Jakarta",
+			}, nil).Times(1)
+
+		// mock cityRepo method Insert
+		errorMessage := "failed to insert city data"
+		cityRepo.Mock.On("Insert", mock.Anything, mock.Anything).Return(nil, errors.New(errorMessage)).Times(1)
+
+		// execute service method
+		result, err := cityService.Insert(context.Background(), &dto.InsertCityRequest{
+			Name:       "Jakarta Selatan",
+			ProvinceId: 1,
+		})
+
+		// validate testing
+		assert.Nil(t, result)
+		assert.NotNil(t, err)
+		assert.Error(t, err)
+		assert.Equal(t, errorMessage, err.Error())
+		provinceRepo.Mock.AssertExpectations(t)
+		cityRepo.Mock.AssertExpectations(t)
+	})
+}

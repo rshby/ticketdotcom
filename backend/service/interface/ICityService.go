@@ -10,4 +10,5 @@ type ICityService interface {
 	GetAll(ctx context.Context) ([]entity.City, error)
 	GetById(ctx context.Context, id int) (*dto.CityDetail[*entity.City], error)
 	GetByProvinceId(ctx context.Context, provinceId int) (*dto.CityDetail[[]entity.City], error)
+	Insert(ctx context.Context, request *dto.InsertCityRequest) (*entity.City, error)
 }
