@@ -15,3 +15,16 @@ response :
 }
 
 // get data city -> dapet provinceId -> get data provice by id(province_id)
+
+buat service dulu (OK)
+buat unit test service (OK)
+buat handler (OK)
+register routes -> test (OK)
+buat unit test handler
+
+1. get provice by id (goroutine)
+2. get city by province id (goroutine)
+
+wait semua
+
+cek jika province not found -> error

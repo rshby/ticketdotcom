@@ -136,7 +136,7 @@ func (c *CityRepo) GetByProvinceId(ctx context.Context, wg *sync.WaitGroup, prov
 	defer wg.Done()
 
 	defer func() {
-		close(chanError)
+		//close(chanError)
 		close(chanRes)
 	}()
 

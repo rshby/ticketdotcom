@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"github.com/opentracing/opentracing-go"
+	"reflect"
 	"sync"
 )
 
@@ -102,6 +103,40 @@ func (c *CityService) GetById(ctx context.Context, id int) (*dto.CityDetail[*ent
 }
 
 func (c *CityService) GetByProvinceId(ctx context.Context, provinceId int) (*dto.CityDetail[[]entity.City], error) {
-	//TODO implement me
-	panic("implement me")
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CityService GetProvinceById")
+	defer span.Finish()
+
+	span.SetTag("request-province-id", provinceId)
+
+	// get province with goroutine
+	wg := &sync.WaitGroup{}
+	chanProvince := make(chan entity.Province, 1)
+	chanCity := make(chan []entity.City, 1)
+	chanErr := make(chan error, 2)
+	defer close(chanErr)
+
+	go c.ProvinceRepository.GetById(ctxTracing, wg, provinceId, chanProvince, chanErr)
+	go c.CityRepository.GetByProvinceId(ctxTracing, wg, provinceId, chanCity, chanErr)
+
+	wg.Wait()
+
+	province, _ := <-chanProvince, <-chanErr
+	city := <-chanCity
+
+	span.SetTag("response-province", province)
+	span.SetTag("response-city", city)
+
+	// if province not found
+	if reflect.DeepEqual(province, entity.Province{}) {
+		return nil, errors.New("record province not found")
+	}
+
+	// success get data city by province id
+	response := dto.CityDetail[[]entity.City]{
+		Province: &province,
+		Cities:   city,
+	}
+
+	span.SetTag("response-object", response)
+	return &response, nil
 }

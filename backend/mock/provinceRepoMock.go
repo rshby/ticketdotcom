@@ -36,7 +36,7 @@ func (p *ProvinceRepoMock) GetAll(ctx context.Context) ([]entity.Province, error
 func (p *ProvinceRepoMock) GetById(ctx context.Context, wg *sync.WaitGroup, id int, chanRes chan entity.Province, chanError chan error) {
 	wg.Add(1)
 	defer func() {
-		close(chanError)
+		//close(chanError)
 		close(chanRes)
 		wg.Done()
 	}()

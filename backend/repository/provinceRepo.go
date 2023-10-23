@@ -29,7 +29,7 @@ func (p *ProvinceRepo) GetById(ctx context.Context, wg *sync.WaitGroup, id int, 
 
 	defer func() {
 		close(chanRes)
-		close(chanError)
+		//close(chanError)
 	}()
 
 	span.SetTag("id", id)

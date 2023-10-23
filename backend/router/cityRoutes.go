@@ -10,5 +10,6 @@ func CreateCityRoutes(r *gin.RouterGroup, handler *handler.CityHandler) *gin.Rou
 
 	route.GET("/cities", handler.GetAllCity)
 	route.POST("/city", handler.Insert)
+	route.GET("/province/cities/:provinceId", handler.GetByProvinceId)
 	return route
 }

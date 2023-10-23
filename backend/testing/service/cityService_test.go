@@ -253,3 +253,58 @@ func TestCityService_Insert(t *testing.T) {
 		cityRepo.Mock.AssertExpectations(t)
 	})
 }
+
+func TestCityService_GetProvinceById(t *testing.T) {
+	t.Run("test get city by province_id success", func(t *testing.T) {
+		provinceRepo := mck.NewProvinceRepoMock()
+		cityRepo := mck.NewCityRepoMock()
+		cityService := service.NewCityService(provinceRepo, cityRepo)
+
+		// mock provinceRepo method GetById
+		provinceRepo.Mock.On("GetById", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(entity.Province{1, "DKI Jakarta"}, nil).Times(1)
+
+		// mock cityRepo method GetByProvinceId
+		cityRepo.Mock.On("GetByProvinceId", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.City{
+				{1, "Jakarta Selatan", 1},
+				{2, "Jakarta Pusat", 1},
+			}, nil).Times(1)
+
+		// execute service method
+		result, err := cityService.GetByProvinceId(context.Background(), 1)
+
+		// validate testing
+		assert.Nil(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, 2, len(result.Cities))
+		provinceRepo.Mock.AssertExpectations(t)
+		cityRepo.Mock.AssertExpectations(t)
+	})
+	t.Run("test get city by province_id error province not found", func(t *testing.T) {
+		provinceRepo := mck.NewProvinceRepoMock()
+		cityRepo := mck.NewCityRepoMock()
+		citySevice := service.NewCityService(provinceRepo, cityRepo)
+
+		// mock provinceRepo method GetById
+		provinceRepo.Mock.On("GetById", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(entity.Province{}, errors.New("record province not found")).Times(1)
+
+		// mock cityRepo method GetByProvinceId
+		cityRepo.Mock.On("GetByProvinceId", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]entity.City{
+				{1, "Jakarta Selatan", 1},
+			}, nil).Times(1)
+
+		// execute service method
+		result, err := citySevice.GetByProvinceId(context.Background(), 1)
+
+		// validate result
+		assert.Nil(t, result)
+		assert.NotNil(t, err)
+		assert.Error(t, err)
+		assert.Equal(t, "record province not found", err.Error())
+		provinceRepo.Mock.AssertExpectations(t)
+		cityRepo.Mock.AssertExpectations(t)
+	})
+}

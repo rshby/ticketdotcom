@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/opentracing/opentracing-go"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -109,5 +110,56 @@ func (c *CityHandler) Insert(ctx *gin.Context) {
 
 	span.SetTag("response-object", response)
 	ctx.JSON(statusCode, &response)
+	return
+}
+
+// handler get city by province_id
+func (c *CityHandler) GetByProvinceId(ctx *gin.Context) {
+	span, ctxTracing := opentracing.StartSpanFromContext(ctx, "CityHandler GetByProvinceId")
+	defer span.Finish()
+
+	// get id
+	provinceId, err := strconv.Atoi(ctx.Params.ByName("provinceId"))
+	if err != nil {
+		statusCode := http.StatusBadRequest
+		ctx.JSON(statusCode, &dto.ApiResponse{
+			StatusCode: statusCode,
+			Status:     helper.GenerateStatusFromCode(statusCode),
+			Message:    "cant convert id to int",
+		})
+		return
+	}
+
+	// call procedure in service
+	cities, err := c.CityService.GetByProvinceId(ctxTracing, provinceId)
+	if err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			statusCode := http.StatusNotFound
+			ctx.JSON(statusCode, &dto.ApiResponse{
+				StatusCode: statusCode,
+				Status:     helper.GenerateStatusFromCode(statusCode),
+				Message:    err.Error(),
+			})
+			return
+		}
+
+		// if internal server error
+		statusCode := http.StatusInternalServerError
+		ctx.JSON(statusCode, &dto.ApiResponse{
+			StatusCode: statusCode,
+			Status:     helper.GenerateStatusFromCode(statusCode),
+			Message:    err.Error(),
+		})
+		return
+	}
+
+	// success
+	statusCode := http.StatusOK
+	ctx.JSON(statusCode, &dto.ApiResponse{
+		StatusCode: statusCode,
+		Status:     helper.GenerateStatusFromCode(statusCode),
+		Message:    "success get data cities by province_id",
+		Data:       cities,
+	})
 	return
 }
