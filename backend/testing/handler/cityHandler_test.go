@@ -309,4 +309,67 @@ func TestCityHandler_GetByProvinceId(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, int(responseBody["status_code"].(float64)))
 		assert.Equal(t, "bad request", responseBody["status"].(string))
 	})
+	t.Run("test get cities by province_id error not found", func(t *testing.T) {
+		cityService := mck.NewCityServiceMock()
+		cityHandler := handler.NewCityHandler(cityService)
+
+		// mock cityService method GetByProvinceId
+		errorMessage := "record province not found"
+		cityService.Mock.On("GetByProvinceId", mock.Anything, mock.Anything).
+			Return(nil, errors.New(errorMessage)).Times(1)
+
+		// create routes
+		r := gin.Default()
+		r.GET("/:provinceId", cityHandler.GetByProvinceId)
+
+		// create request
+		req := httptest.NewRequest(http.MethodGet, "/1", nil)
+		recorder := httptest.NewRecorder()
+
+		// execute handler
+		r.ServeHTTP(recorder, req)
+
+		// response
+		response := recorder.Result()
+		body, _ := io.ReadAll(response.Body)
+		responseBody := map[string]any{}
+		json.Unmarshal(body, &responseBody)
+
+		// validate testing
+		assert.Equal(t, http.StatusNotFound, response.StatusCode)
+		assert.Equal(t, http.StatusNotFound, int(responseBody["status_code"].(float64)))
+		cityService.Mock.AssertExpectations(t)
+	})
+	t.Run("test get cities by province_id error internal server error", func(t *testing.T) {
+		cityService := mck.NewCityServiceMock()
+		cityHandler := handler.NewCityHandler(cityService)
+
+		// mock cityService method GetByProvinceId
+		errorMessage := "failed to insert"
+		cityService.Mock.On("GetByProvinceId", mock.Anything, mock.Anything).
+			Return(nil, errors.New(errorMessage)).Times(1)
+
+		// create route
+		r := gin.Default()
+		r.GET("/:provinceId", cityHandler.GetByProvinceId)
+
+		// create request
+		req := httptest.NewRequest(http.MethodGet, "/1", nil)
+		recorder := httptest.NewRecorder()
+
+		// execute handler
+		r.ServeHTTP(recorder, req)
+
+		// result
+		response := recorder.Result()
+		body, _ := io.ReadAll(response.Body)
+		responseBody := map[string]any{}
+		json.Unmarshal(body, &responseBody)
+
+		// validate testing
+		assert.Equal(t, http.StatusInternalServerError, response.StatusCode)
+		assert.Equal(t, http.StatusInternalServerError, int(responseBody["status_code"].(float64)))
+		assert.Equal(t, "internal server error", responseBody["status"].(string))
+		cityService.Mock.AssertExpectations(t)
+	})
 }
