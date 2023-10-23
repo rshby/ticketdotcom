@@ -99,7 +99,7 @@ func TestGenderHandler_Insert(t *testing.T) {
 		genderHandler := handler.NewGenderHandler(genderService)
 
 		// mock genderService method Insert
-		errorMessage := "faild to insert data gender"
+		errorMessage := "failed to insert data gender"
 		genderService.Mock.On("Insert", mock.Anything, mock.Anything).Return(nil, errors.New(errorMessage)).Times(1)
 
 		// create routes
